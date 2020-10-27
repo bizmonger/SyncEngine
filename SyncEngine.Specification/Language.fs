@@ -7,11 +7,9 @@ module Language =
 
     type Endpoint = string
 
-    type Request = {
+    type Request<'submission> = {
         Endpoint   : Endpoint
-        Submission : obj
+        Submission : 'submission
     }
 
-    type IRespond =
-
-        abstract member Respond : AsyncResult<'respose,'error> -> unit
+    type IRespond = abstract member RespondTo : Result<'respose,'error> -> unit

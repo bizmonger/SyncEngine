@@ -5,13 +5,14 @@ open Language
 
 module Operations =
 
-    type Pull<'response> = Request -> unit -> AsyncResult<'response, ErrorDescription>
+    type Pull<'submission,'response> = Request<'submission> -> AsyncResult<'response, ErrorDescription>
 
-    type SyncInterval<'response> = {
+    type SyncItem<'submission,'response> = {
         Id          : string
-        Execute     : Pull<'response>
+        Request     : Request<'submission>
+        Execute     : Pull<'submission,'response>
         Interval    : TimeSpan
         Subscribers : IRespond seq
     }
 
-    type Start<'response> = SyncInterval<'response> -> AsyncResult<unit,ErrorDescription>
+    type Start<'submission,'response> = SyncItem<'submission,'response> -> AsyncResult<unit,ErrorDescription>
