@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SyncEngine.Specification\SyncEngine.Specification.fsproj" />
     <ProjectReference Include="..\SyncEngine.TestAPI\SyncEngine.TestAPI.fsproj" />
+    <ProjectReference Include="..\SyncEngine\SyncEngine.fsproj" />
   </ItemGroup>
 
 </Project>

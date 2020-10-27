@@ -15,4 +15,4 @@ module Operations =
         Subscribers : IRespond seq
     }
 
-    type Start<'submission,'response> = SyncItem<'submission,'response> -> AsyncResult<unit,ErrorDescription>
+    type Start<'submission,'response> = SyncItem<'submission,'response> -> unit -> AsyncResult<unit,ErrorDescription>

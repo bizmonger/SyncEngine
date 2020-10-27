@@ -3,7 +3,7 @@
 module Language =
 
     type ErrorDescription = string
-    type AsyncResult<'respose,'error> = Async<Result<'respose,'error>>
+    type AsyncResult<'response,'error> = Async<Result<'response,'error>>
 
     type Endpoint = string
 
@@ -12,4 +12,4 @@ module Language =
         Submission : 'submission
     }
 
-    type IRespond = abstract member RespondTo : Result<'respose,'error> -> unit
+    type IRespond = abstract member RespondTo : Result<'response,'error> -> unit
