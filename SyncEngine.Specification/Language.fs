@@ -6,6 +6,7 @@ module Language =
     type AsyncResult<'response,'error> = Async<Result<'response,'error>>
 
     type Endpoint = string
+    type Id       = string
 
     type Request<'submission> = {
         Endpoint   : Endpoint

@@ -9,10 +9,13 @@ type Engine<'submission,'response>(syncs:SyncItem<'submission,'response> seq) =
     let mutable timer : Timer = null
     let mutable errors = seq []
 
+    let kvPairs = syncs |> Seq.map(fun sync -> (sync.Id, new Timer()))
+    let map     = Map.ofSeq kvPairs
+
     let start : Start<'submission,'response> =
 
         fun v _ ->
-        
+
             async {
 
                 let execute () =
@@ -24,7 +27,8 @@ type Engine<'submission,'response>(syncs:SyncItem<'submission,'response> seq) =
                     }
 
                 let miliseconds = (float) v.Interval.Seconds * 1000.0
-                timer <- new Timer(miliseconds)
+                let timer = map.[v.Id]
+                timer.Interval  <- miliseconds
                 timer.AutoReset <- true
                 timer.Elapsed.Add (fun _ -> execute() |> Async.RunSynchronously)
                 timer.Start()

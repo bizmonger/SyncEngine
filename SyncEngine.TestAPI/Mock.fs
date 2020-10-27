@@ -5,7 +5,7 @@ open SyncEngine.Operations
 open SyncEngine.Language
 open System.Timers
 
-type MockResponse() as x =
+type MockResponse() =
 
     let mutable responded = false
 
@@ -41,3 +41,4 @@ module Mock =
     }
 
     let someResponder1 = MockResponse()
+    let someResponder2 = MockResponse()
