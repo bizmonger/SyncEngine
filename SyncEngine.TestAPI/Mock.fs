@@ -3,7 +3,6 @@
 open System
 open SyncEngine.Operations
 open SyncEngine.Language
-open System.Timers
 
 type MockResponse() =
 

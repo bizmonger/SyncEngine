@@ -3,6 +3,8 @@
 open System.Timers
 open Operations
 
+type IEngine = abstract member Start : unit -> unit
+
 type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq) =
 
     let mutable errors = seq []
@@ -40,15 +42,16 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
     member x.Errors with get()  = errors
                     and  set(v) = errors <- v
 
-    member x.Start() =
+    interface IEngine with
+        member x.Start() =
 
-        let execute (sync:SyncItem<_,_>) = 
+            let execute (sync:SyncItem<_,_>) = 
         
-            async {
+                async {
             
-                match! start sync with
-                | Error msg -> x.Errors <- errors |> Seq.append msg
-                | Ok _      -> ()
-            }
+                    match! start sync with
+                    | Error msg -> x.Errors <- errors |> Seq.append msg
+                    | Ok _      -> ()
+                }
     
-        syncItems |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
+            syncItems |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
