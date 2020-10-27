@@ -1,39 +1,40 @@
 ﻿namespace SyncEngine
 
 open System.Timers
-open Language
 open Operations
 
-type Engine<'submission,'response>(syncs:SyncItem<'submission,'response> seq) =
+type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq) =
 
-    let mutable timer : Timer = null
     let mutable errors = seq []
 
-    let kvPairs = syncs |> Seq.map(fun sync -> (sync.Id, new Timer()))
+    let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, new Timer()))
     let map     = Map.ofSeq kvPairs
 
     let start : Start<'submission,'response> =
 
-        fun v _ ->
+        fun v ->
 
             async {
 
-                let execute () =
+                try
+                    let execute () =
 
-                    async {
+                        async {
                     
-                        let! result = v.Execute v.Request
-                        v.Subscribers |> Seq.iter (fun s -> s.RespondTo result)
-                    }
+                            let! result = v.Execute v.Request
+                            v.Subscribers |> Seq.iter (fun s -> s.RespondTo result)
+                        }
 
-                let miliseconds = (float) v.Interval.Seconds * 1000.0
-                let timer = map.[v.Id]
-                timer.Interval  <- miliseconds
-                timer.AutoReset <- true
-                timer.Elapsed.Add (fun _ -> execute() |> Async.RunSynchronously)
-                timer.Start()
+                    let miliseconds = (float) v.Interval.Seconds * 1000.0
+                    let timer = map.[v.Id]
+                    timer.Interval  <- miliseconds
+                    timer.AutoReset <- true
+                    timer.Elapsed.Add (fun _ -> execute() |> Async.RunSynchronously)
+                    timer.Start()
 
-                return Ok ()    
+                    return Ok ()
+                    
+                with ex -> return Error <| ex.GetBaseException().Message
         }
 
     member x.Errors with get()  = errors
@@ -45,9 +46,9 @@ type Engine<'submission,'response>(syncs:SyncItem<'submission,'response> seq) =
         
             async {
             
-                match! start sync () with
+                match! start sync with
                 | Error msg -> x.Errors <- errors |> Seq.append msg
                 | Ok _      -> ()
             }
     
-        syncs |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
+        syncItems |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
