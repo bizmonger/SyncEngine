@@ -56,3 +56,9 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
                 }
     
             syncItems |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
+
+type MultiEngine(engines:IEngine seq) =
+
+    member x.Start() =
+
+        engines |> Seq.iter(fun engine -> engine.Start())

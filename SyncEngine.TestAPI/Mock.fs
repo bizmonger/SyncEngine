@@ -1,8 +1,8 @@
 ﻿namespace SyncEngine.TestAPI
 
 open System
-open SyncEngine.Operations
 open SyncEngine.Language
+open SyncEngine.Operations
 
 type MockResponse() =
 
