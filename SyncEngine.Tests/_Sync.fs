@@ -60,7 +60,7 @@ let ``Engine only syncs registered syncitem subscribers`` () =
         // Test
         engines.Start()
         
-        Thread.Sleep 1100
+        do! Async.Sleep 1100
 
         // Verify
         [someResponder1.Responded
