@@ -12,7 +12,7 @@ let ``Bootstrap sync engine`` () =
     
         // Setup
         let syncItem = { someSyncItem1 with Subscribers = seq [someResponder1] }
-        let engine = Engine(seq [syncItem]) :> IEngine
+        let engine   = Engine(seq [syncItem]) :> IEngine
 
         // Test
         engine.Start()
@@ -54,8 +54,8 @@ let ``Engine only syncs registered syncitem subscribers`` () =
         // Setup
         let syncItem1 = { someSyncItem1 with Subscribers = seq [someResponder1] }
         let syncItem2 = { someSyncItem2 with Subscribers = seq [someResponder2] }
-        let engine1    = Engine(seq [syncItem1]) :> IEngine
-        let engine2    = Engine(seq [syncItem2]) :> IEngine
+        let engine1   = Engine(seq [syncItem1]) :> IEngine
+        let engine2   = Engine(seq [syncItem2]) :> IEngine
 
         // Test
         [ engine1
