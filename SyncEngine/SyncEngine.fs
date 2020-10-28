@@ -25,7 +25,7 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
                         async {
                     
                             let! serverResult = v.Execute v.Request
-                            let  result = { Request  = v.Request; Response = serverResult }
+                            let  result = { Request= v.Request; Response= serverResult }
 
                             v.Subscribers |> Seq.iter (fun subscriber -> subscriber.RespondTo result)
                         }
