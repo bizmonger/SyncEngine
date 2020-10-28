@@ -13,7 +13,7 @@ type MockResponse() =
 
     interface IRespond with
 
-        member x.RespondTo(result:Result<'response,'error>) = x.Responded <- true
+        member x.RespondTo(_:ContextResponse<'submission,'response>) = x.Responded <- true
 
 module Mock =
 

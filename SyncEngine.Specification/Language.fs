@@ -13,4 +13,9 @@ module Language =
         Submission : 'submission
     }
 
-    type IRespond = abstract member RespondTo : Result<'response,'error> -> unit
+    type ContextResponse<'submission,'response> = {
+        Request  : Request<'submission>
+        Response : 'response
+    }
+
+    type IRespond = abstract member RespondTo : ContextResponse<'submission,'response> -> unit

@@ -2,6 +2,7 @@
 
 open System.Timers
 open Operations
+open Language
 
 type IEngine = abstract member Start : unit -> unit
 
@@ -23,8 +24,14 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
 
                         async {
                     
-                            let! result = v.Execute v.Request
-                            v.Subscribers |> Seq.iter (fun s -> s.RespondTo result)
+                            let! serverResult = v.Execute v.Request
+
+                            let contextResult : ContextResponse<'submission,Result<'response,ErrorDescription>> = {
+                                Request  = v.Request
+                                Response = serverResult
+                            }
+
+                            v.Subscribers |> Seq.iter (fun s -> contextResult |>  s.RespondTo)
                         }
 
                     let miliseconds = (float) v.Interval.Seconds * 1000.0
