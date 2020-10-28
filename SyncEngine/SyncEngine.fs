@@ -1,8 +1,8 @@
 ﻿namespace SyncEngine
 
 open System.Timers
-open Operations
 open Language
+open Operations
 
 type IEngine = abstract member Start : unit -> unit
 
@@ -25,13 +25,9 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
                         async {
                     
                             let! serverResult = v.Execute v.Request
+                            let  result = { Request  = v.Request; Response = serverResult }
 
-                            let contextResult : ContextResponse<'submission,Result<'response,ErrorDescription>> = {
-                                Request  = v.Request
-                                Response = serverResult
-                            }
-
-                            v.Subscribers |> Seq.iter (fun s -> contextResult |>  s.RespondTo)
+                            v.Subscribers |> Seq.iter (fun subscriber -> subscriber.RespondTo result)
                         }
 
                     let miliseconds = (float) v.Interval.Seconds * 1000.0
@@ -66,6 +62,4 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
 
 type MultiEngine(engines:IEngine seq) =
 
-    member x.Start() =
-
-        engines |> Seq.iter(fun engine -> engine.Start())
+    member x.Start() = engines |> Seq.iter(fun engine -> engine.Start())
