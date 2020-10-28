@@ -52,11 +52,11 @@ let ``Engine only syncs registered syncitem subscribers`` () =
     async {
     
         // Setup
-        let syncItem1 = { someSyncItem1 with Subscribers = seq [someResponder1] }
-        let syncItem2 = { someSyncItem2 with Subscribers = seq [someResponder2] }
+        let syncItem1 = { someSyncItem1 with Subscribers = seq {someResponder1} }
+        let syncItem2 = { someSyncItem2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq [syncItem1]) :> IEngine
-                           Engine(seq [syncItem2]) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}) :> IEngine
+                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
         // Test
         engines.Start()
         
