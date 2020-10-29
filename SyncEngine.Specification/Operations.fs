@@ -9,6 +9,7 @@ module Operations =
 
     type SyncItem<'submission,'response> = {
         Id          : Id
+        State       : SyncState
         Request     : Request<'submission>
         Execute     : Pull<'submission,'response>
         Interval    : TimeSpan

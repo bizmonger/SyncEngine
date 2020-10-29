@@ -25,6 +25,7 @@ module Mock =
 
     let someSyncItem1 = {
         Id          = "some_sync_id_1"
+        State       = NotStarted
         Request     = { Endpoint="some_endpoint"; Submission=123 }
         Execute     = somePullOperation1
         Interval    = oneSecond
@@ -33,6 +34,7 @@ module Mock =
 
     let someSyncItem2 = {
         Id          = "some_sync_id_2"
+        State       = NotStarted
         Request     = { Endpoint="some_endpoint"; Submission="123" }
         Execute     = somePullOperation2
         Interval    = oneSecond

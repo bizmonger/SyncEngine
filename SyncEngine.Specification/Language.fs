@@ -8,6 +8,8 @@ module Language =
     type Endpoint = string
     type Id       = string
 
+    type SyncState = NotStarted | Started | Stopped
+
     type Request<'submission> = {
         Endpoint   : Endpoint
         Submission : 'submission
