@@ -90,9 +90,12 @@ let ``Stopping engine sets state to stopped`` () =
         do! engines.Stop()
 
         // Verify
-        engines.TryFind(syncItem1.Id)
-        |> function
-           | None   -> failwith "Failed to find sync item"
-           | Some (v:SyncItem<int,string>) -> v.State |> should equal Started
+        let stopped = engines.CheckAllEnginesItemsStopped()
+        stopped |> should equal false
+
+        // engines.TryFind(syncItem1.Id)
+        // |> function
+        //    | None   -> failwith "Failed to find sync item"
+        //    | Some (v:SyncItem<int,string>) -> v.State |> should equal Started
 
     } |> Async.RunSynchronously

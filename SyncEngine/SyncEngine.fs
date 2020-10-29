@@ -9,8 +9,9 @@ type IEngine =
     abstract member Start : unit -> unit
     abstract member Stop  : unit -> unit
     abstract member Stop  : Id   -> unit
+    abstract member AllItemsStopped: bool with get
 
-type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq) =
+type Engine<'submission,'response>(syncItems : SyncItem<'submission,'response> seq) =
 
     let mutable errors = seq []
     let mutable state  = ""
@@ -55,6 +56,15 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
 
     interface IEngine with
 
+        member this.AllItemsStopped with get() =
+            syncItems 
+            |> Seq.forall(fun item -> item.State = Stopped)
+
+        member this.AllItemsStarted with get() =
+            syncItems 
+            |> Seq.forall(fun item -> item.State = Started)
+
+
         member x.Start() : unit =
 
             let execute (sync:SyncItem<_,_>) = 
@@ -81,8 +91,11 @@ type MultiEngine(engines:IEngine seq) =
 
     member x.Start() = engines |> Seq.iter(fun engine -> engine.Start())
     member x.Stop()  = async { engines |> Seq.iter(fun engine -> engine.Stop()) }
+    member x.CheckAllEnginesItemsStopped() =
+        engines |> Seq.forall (fun engine -> engine.AllItemsStopped)
 
-    member x.TryFind(id:Id) =
 
-        None
-        //engines |> Seq.tryFind (fun v -> v.SyncItems |> Seq.tryFind())
+    // member x.TryFind(id:Id) =
+
+    //     None
+    //     //engines |> Seq.tryFind (fun v -> v.SyncItems |> Seq.tryFind())
