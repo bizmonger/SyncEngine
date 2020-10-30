@@ -6,16 +6,16 @@ open Operations
 
 type IEngine = 
 
-    abstract member Start : unit -> unit
-    abstract member Stop  : unit -> unit
-    abstract member Stop  : Id   -> unit
+    abstract member TryFind : Id   -> DataSyncInstance option
+    abstract member Start   : unit -> unit
+    abstract member Stop    : unit -> unit
+    abstract member Stop    : Id   -> unit
 
 type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response> seq) =
 
     let mutable errors = seq []
-    let mutable state  = ""
 
-    let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, new Timer()))
+    let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, (sync, new Timer())))
     let map     = Map.ofSeq kvPairs
 
     let destroy (v:Id * Timer) =
@@ -42,7 +42,7 @@ type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response>
                         }
 
                     let miliseconds = (float) v.Interval.Seconds * 1000.0
-                    let timer = map.[v.Id]
+                    let _ , timer = map.[v.Id]
                     timer.Interval  <- miliseconds
                     timer.AutoReset <- true
                     timer.Elapsed.Add (fun _ -> execute() |> Async.RunSynchronously)
@@ -56,10 +56,14 @@ type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response>
     member x.Errors with get()  = errors
                     and  set(v) = errors <- v
 
-    member x.State with get()  = state
-                   and  set(v) = state <- v
-
     interface IEngine with
+
+        member x.TryFind(id: Id) = 
+        
+            kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
+                    |> function
+                       | None   -> None
+                       | Some v -> Some <| DataSyncInstance()
 
         member x.Start() : unit =
 
@@ -74,14 +78,22 @@ type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response>
     
             syncItems |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
 
-        member x.Stop() = kvPairs |> Seq.iter destroy
+        member x.Stop() =
+
+            let handle v =
+
+                let id, timer = fst v, snd(snd v)
+                destroy (id, timer)
+            
+            kvPairs |> Seq.iter handle
 
         member x.Stop(id: Id) = 
         
             kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
                     |> function
                        | None   -> ()
-                       | Some v -> destroy v
+                       | Some v -> let id, timer = fst v, snd(snd v)
+                                   destroy (id, timer)
 
 
 type MultiEngine(engines:IEngine seq) =

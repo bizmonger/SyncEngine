@@ -20,10 +20,12 @@ module Language =
         Response : 'response
     }
 
+    type IRespond = abstract member RespondTo : ContextResponse<'submission,'response> -> unit
+
     type DataSyncItem<'submission,'response> = {
         Id          : Id
         Request     : Request<'submission>
-        Execute     : Request<'submission> -> AsyncResult<'response, ErrorDescription> // aka: PULL
+        Execute     : Request<'submission> -> AsyncResult<'response, ErrorDescription> // ALIAS: PULL
         Interval    : TimeSpan
         Subscribers : IRespond seq
     }
@@ -33,6 +35,15 @@ module Language =
         | Started    of DataSyncItem<'submission,'response>
         | Stopped    of DataSyncItem<'submission,'response>
 
-    and IRespond = abstract member RespondTo : ContextResponse<'submission,'response> -> unit
-
     type Log = string seq
+
+    type IDataSync = 
+        abstract member Start: unit -> unit
+        abstract member Stop : unit -> unit
+
+    type DataSyncInstance() =
+
+        interface IDataSync with
+
+            member x.Start() = ()
+            member x.Stop () = ()
