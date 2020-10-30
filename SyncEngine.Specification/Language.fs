@@ -41,7 +41,7 @@ module Language =
         abstract member Start: unit -> unit
         abstract member Stop : unit -> unit
 
-    type DataSyncInstance() =
+    type DataSyncInstance(dataSyncItem:obj) =
 
         interface IDataSync with
 

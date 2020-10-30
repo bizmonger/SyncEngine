@@ -63,7 +63,10 @@ type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response>
             kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
                     |> function
                        | None   -> None
-                       | Some v -> Some <| DataSyncInstance()
+                       | Some v -> 
+                        
+                            let syncItem = fst(snd v)
+                            Some <| DataSyncInstance(syncItem)
 
         member x.Start() : unit =
 
@@ -103,5 +106,15 @@ type MultiEngine(engines:IEngine seq) =
 
     member x.TryFind(id:Id) =
 
-        None
-        //engines |> Seq.tryFind (fun v -> v.SyncItems |> Seq.tryFind())
+        let find (v:IEngine) =
+
+            id |> v.TryFind |> function
+            | None      -> None
+            | Some item -> Some item
+
+        engines 
+        |> Seq.map find
+        |> Seq.toList
+        |> function
+           | []   -> None
+           | h::_ -> Some h
