@@ -4,13 +4,6 @@ open System.Timers
 open Language
 open Operations
 
-module Execute =
-
-    let Sync (v:DataSyncItem<'submission,'response>) = 
-    
-        
-        ()
-
 type IEngine = 
 
     abstract member Start : unit -> unit
@@ -24,6 +17,12 @@ type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response>
 
     let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, new Timer()))
     let map     = Map.ofSeq kvPairs
+
+    let destroy (v:Id * Timer) =
+
+        let timer = (snd v)
+        timer.Stop()
+        timer.Dispose()
 
     let start : Start<'submission,'response> =
 
@@ -75,13 +74,14 @@ type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response>
     
             syncItems |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
 
-        member x.Stop()       : unit = kvPairs |> Seq.iter(fun v -> (snd v).Stop())
-        member x.Stop(id: Id) : unit = 
+        member x.Stop() = kvPairs |> Seq.iter destroy
+
+        member x.Stop(id: Id) = 
         
             kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
                     |> function
                        | None   -> ()
-                       | Some v -> (snd v).Stop()
+                       | Some v -> destroy v
 
 
 type MultiEngine(engines:IEngine seq) =
