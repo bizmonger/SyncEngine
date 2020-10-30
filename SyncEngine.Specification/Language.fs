@@ -1,5 +1,7 @@
 ﻿namespace SyncEngine
 
+open System
+
 module Language =
 
     type ErrorDescription = string
@@ -7,8 +9,6 @@ module Language =
 
     type Endpoint = string
     type Id       = string
-
-    type SyncState = NotStarted | Started | Stopped
 
     type Request<'submission> = {
         Endpoint   : Endpoint
@@ -20,4 +20,19 @@ module Language =
         Response : 'response
     }
 
-    type IRespond = abstract member RespondTo : ContextResponse<'submission,'response> -> unit
+    type DataSyncItem<'submission,'response> = {
+        Id          : Id
+        Request     : Request<'submission>
+        Execute     : Request<'submission> -> AsyncResult<'response, ErrorDescription> // aka: PULL
+        Interval    : TimeSpan
+        Subscribers : IRespond seq
+    }
+
+    and SyncState<'submission,'response> = 
+        | NotStarted of DataSyncItem<'submission,'response>
+        | Started    of DataSyncItem<'submission,'response>
+        | Stopped    of DataSyncItem<'submission,'response>
+
+    and IRespond = abstract member RespondTo : ContextResponse<'submission,'response> -> unit
+
+    type Log = string seq

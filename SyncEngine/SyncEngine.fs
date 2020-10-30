@@ -4,13 +4,20 @@ open System.Timers
 open Language
 open Operations
 
+module Execute =
+
+    let Sync (v:DataSyncItem<'submission,'response>) = 
+    
+        
+        ()
+
 type IEngine = 
 
     abstract member Start : unit -> unit
     abstract member Stop  : unit -> unit
     abstract member Stop  : Id   -> unit
 
-type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq) =
+type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response> seq) =
 
     let mutable errors = seq []
     let mutable state  = ""
@@ -57,7 +64,7 @@ type Engine<'submission,'response>(syncItems:SyncItem<'submission,'response> seq
 
         member x.Start() : unit =
 
-            let execute (sync:SyncItem<_,_>) = 
+            let execute (sync:DataSyncItem<_,_>) = 
         
                 async {
             

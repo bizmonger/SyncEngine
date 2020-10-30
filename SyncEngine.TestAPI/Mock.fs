@@ -23,18 +23,16 @@ module Mock =
     let somePullOperation1 : Pull<int,string> = fun _ -> async.Return <| Ok "successful response"
     let somePullOperation2 : Pull<string,int> = fun _ -> async.Return <| Ok 200
 
-    let someSyncItem1 = {
+    let someDataSync1 = {
         Id          = "some_sync_id_1"
-        State       = NotStarted
         Request     = { Endpoint="some_endpoint"; Submission=123 }
         Execute     = somePullOperation1
         Interval    = oneSecond
         Subscribers = seq []
     }
 
-    let someSyncItem2 = {
+    let someDataSync2 = {
         Id          = "some_sync_id_2"
-        State       = NotStarted
         Request     = { Endpoint="some_endpoint"; Submission="123" }
         Execute     = somePullOperation2
         Interval    = oneSecond

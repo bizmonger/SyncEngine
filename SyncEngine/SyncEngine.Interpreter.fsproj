@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <Compile Include="SyncEngine.fs" />
+    <Compile Include="SyncEngine.Diagnostics.fs" />
   </ItemGroup>
 
   <ItemGroup>
