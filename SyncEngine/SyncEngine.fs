@@ -27,10 +27,10 @@ type Engine<'submission,'response>
         timer.Stop()
         timer.Dispose()
 
-    let log v : unit =
+    let log event item : unit =
 
-        let logItem = { Event="Started"; Timestamp= DateTime.Now }
-        let update  =  seq [v.Id, logItem]
+        let logItem = { Event=event; Timestamp= DateTime.Now }
+        let update  =  seq [item.Id, logItem]
 
         diagnostics <- { diagnostics with Log = diagnostics.Log |> Seq.append update }
 
@@ -58,7 +58,7 @@ type Engine<'submission,'response>
                     timer.Elapsed.Add (fun _ -> execute() |> Async.Start)
                     timer.Start();
                     
-                    log syncItem
+                    syncItem |> log "Started"
 
                     return Ok ()
                     
@@ -95,10 +95,13 @@ type Engine<'submission,'response>
 
         member x.Stop() =
 
-            let handle v =
+            let handle kv =
 
-                let id, timer = fst v, snd(snd v)
+                let id   , value = fst kv    , snd kv
+                let item , timer = fst value , snd value
+
                 destroy (id, timer)
+                item |> log "Stopped"
             
             kvPairs |> Seq.iter handle
 

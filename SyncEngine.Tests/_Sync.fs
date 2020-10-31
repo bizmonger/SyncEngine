@@ -92,6 +92,6 @@ let ``Stopping engine sets state to stopped`` () =
         do! engines.Stop()
 
         // Verify
-        engines |> Diagnostics.report |> Seq.forall (fun v -> v.Event = "Is suspended") |> should equal true
+        (engines |> Diagnostics.report |> Seq.head).Event = "Stopped" |> should equal true
 
     } |> Async.RunSynchronously
