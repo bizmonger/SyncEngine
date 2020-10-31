@@ -125,3 +125,30 @@ let ``Stopping engine sets state to stopped`` () =
         |> Seq.length |> should equal 2
 
     } |> Async.RunSynchronously
+
+[<Test>]
+let ``Log entries don't exceed max count allowed`` () =
+
+    async {
+    
+        // Setup
+        let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
+        let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
+
+        let engines = seq [Engine(seq {syncItem1}) :> IEngine
+                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+
+        engines.Start(); 
+        
+        do! Async.Sleep 1100
+
+        // Test
+        do! engines.Stop()
+
+        // Verify
+        engines.Log() 
+        |> Seq.map(fun (_,v) -> v)
+        |> Seq.filter(fun v -> v.Event = "Stopped")
+        |> Seq.length |> should equal 2
+
+    } |> Async.RunSynchronously

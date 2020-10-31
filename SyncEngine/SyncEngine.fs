@@ -7,16 +7,17 @@ open Operations
 
 type IEngine = 
 
-    abstract member TryFind     : Id   -> DataSyncInstance option
-    abstract member Start       : unit -> unit
-    abstract member Stop        : unit -> unit
-    abstract member Stop        : Id   -> unit
-    abstract member Diagnostics : unit -> Diagnostics
+    abstract member TryFind  : Id   -> DataSyncInstance option
+    abstract member Start    : unit -> unit
+    abstract member Stop     : unit -> unit
+    abstract member Stop     : Id   -> unit
+    abstract member Log      : unit -> Log
+    abstract member ClearLog : unit -> unit
 
 type Engine<'submission,'response>
     (syncItems:DataSyncItem<'submission,'response> seq) =
 
-    let mutable diagnostics = { Log = seq [] }
+    let mutable diagnostics = seq []
     let mutable errors = seq []
 
     let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, (sync, new Timer())))
@@ -33,7 +34,7 @@ type Engine<'submission,'response>
         let logItem = { Event=event; Timestamp= DateTime.Now }
         let update  =  seq [item.Id, logItem]
 
-        diagnostics <- { diagnostics with Log = diagnostics.Log |> Seq.append update }
+        diagnostics <- diagnostics |> Seq.append update
 
     let start : Start<'submission,'response> =
 
@@ -71,18 +72,6 @@ type Engine<'submission,'response>
 
     interface IEngine with
 
-        member x.Diagnostics(): Diagnostics = diagnostics
-
-        member x.TryFind(id: Id) = 
-        
-            kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
-                    |> function
-                       | None   -> None
-                       | Some v -> 
-                        
-                            let syncItem = fst(snd v)
-                            Some <| DataSyncInstance(syncItem)
-
         member x.Start() : unit =
 
             let execute (sync:DataSyncItem<_,_>) = 
@@ -116,6 +105,18 @@ type Engine<'submission,'response>
                        | Some v -> let id, timer = fst v, snd(snd v)
                                    destroy (id, timer)
 
+        member x.TryFind(id: Id) = 
+            
+                kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
+                        |> function
+                           | None   -> None
+                           | Some v -> 
+                            
+                                let syncItem = fst(snd v)
+                                Some <| DataSyncInstance(syncItem)
+
+        member x.Log()      : Log  = diagnostics
+        member x.ClearLog() : unit = diagnostics <- seq []
 
 type MultiEngine(engines:IEngine seq) =
 
@@ -124,10 +125,11 @@ type MultiEngine(engines:IEngine seq) =
 
     member x.Log() : (Id * LogItem) seq = 
     
-        engines |> Seq.map(fun v -> v.Diagnostics()) 
-                |> Seq.map(fun v -> v.Log) 
+        engines |> Seq.map(fun engine -> engine.Log()) 
                 |> Seq.concat
-                |> Seq.sortByDescending(fun (_,v) -> v.Timestamp)
+                |> Seq.sortByDescending(fun (_,logItem) -> logItem.Timestamp)
+
+    member x.ClearLog() = engines |> Seq.iter(fun engine -> engine.ClearLog()) 
 
     member x.TryFind(id:Id) =
 

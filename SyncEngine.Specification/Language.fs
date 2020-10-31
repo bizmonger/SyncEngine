@@ -35,7 +35,7 @@ module Language =
         Timestamp : DateTime
     }
 
-    type Diagnostics = { Log : (Id * LogItem) seq }
+    type Log = (Id * LogItem) seq
 
     type IDataSync = 
         abstract member Start: unit -> unit
