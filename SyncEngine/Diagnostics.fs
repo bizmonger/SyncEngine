@@ -5,7 +5,7 @@ open SyncEngine.Diagnostics.Operations
 
 module Diagnostics =
 
-    let report (engines:MultiEngine) : State seq = 
+    let report (engines:MultiEngine) : LogItem seq = 
         seq []
 
     //let log             : Log<'submission,'response> = fun _ -> async.Return <| Error "not implemented"

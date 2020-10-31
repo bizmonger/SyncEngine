@@ -1,5 +1,6 @@
 ﻿namespace SyncEngine
 
+open System
 open System.Timers
 open Language
 open Operations
@@ -12,8 +13,9 @@ type IEngine =
     abstract member Stop    : Id   -> unit
 
 type Engine<'submission,'response>
-    (syncItems:DataSyncItem<'submission,'response> seq, diagnostics:Diagnostics) =
+    (syncItems:DataSyncItem<'submission,'response> seq) =
 
+    let mutable diagnostics = { Log = seq [] }
     let mutable errors = seq []
 
     let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, (sync, new Timer())))
@@ -25,9 +27,16 @@ type Engine<'submission,'response>
         timer.Stop()
         timer.Dispose()
 
+    let log v : unit =
+
+        let logItem = { Event="Started"; Timestamp= DateTime.Now }
+        let update  =  seq [v.Id, logItem]
+
+        diagnostics <- { diagnostics with Log = diagnostics.Log |> Seq.append update }
+
     let start : Start<'submission,'response> =
 
-        fun v ->
+        fun syncItem ->
 
             async {
 
@@ -36,18 +45,20 @@ type Engine<'submission,'response>
 
                         async {
                     
-                            let! serverResult = v.Execute v.Request
-                            let  result = { Request= v.Request; Response= serverResult }
+                            let! serverResult = syncItem.Execute syncItem.Request
+                            let  result       = { Request= syncItem.Request; Response= serverResult }
 
-                            v.Subscribers |> Seq.iter (fun subscriber -> subscriber.RespondTo result)
+                            syncItem.Subscribers |> Seq.iter (fun subscriber -> subscriber.RespondTo result)
                         }
 
-                    let miliseconds = (float) v.Interval.Seconds * 1000.0
-                    let _ , timer = map.[v.Id]
+                    let miliseconds = (float) syncItem.Interval.Seconds * 1000.0
+                    let _ , timer   = map.[syncItem.Id]
                     timer.Interval  <- miliseconds
                     timer.AutoReset <- true
                     timer.Elapsed.Add (fun _ -> execute() |> Async.Start)
-                    timer.Start()
+                    timer.Start();
+                    
+                    log syncItem
 
                     return Ok ()
                     

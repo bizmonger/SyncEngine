@@ -4,7 +4,6 @@ open System.Threading
 open NUnit.Framework
 open FsUnit
 open SyncEngine.TestAPI.Mock
-open Operations
 open SyncEngine.Language
 
 [<Test>]
@@ -13,9 +12,8 @@ let ``Bootstrap sync engine`` () =
     async {
     
         // Setup
-        let diagnostics = { Log = seq [] }
         let syncItem = { someDataSync1 with Subscribers = seq {someResponder1} }
-        let engine   = Engine(seq [syncItem], diagnostics) :> IEngine
+        let engine   = Engine(seq [syncItem]) :> IEngine
 
         // Test
         engine.Start()
@@ -32,9 +30,8 @@ let ``Engine with multiple syncs`` () =
     async {
     
         // Setup
-        let diagnostics = { Log = seq [] }
         let syncItem = { someDataSync1 with Subscribers = seq {someResponder1; someResponder2} }
-        let engine   = Engine(seq [syncItem], diagnostics) :> IEngine
+        let engine   = Engine(seq [syncItem]) :> IEngine
 
         // Test
         engine.Start()
@@ -56,12 +53,11 @@ let ``Engine only syncs registered syncitem subscribers`` () =
     async {
     
         // Setup
-        let diagnostics = { Log = seq [] }
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}, diagnostics) :> IEngine
-                           Engine(seq {syncItem2}, diagnostics) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}) :> IEngine
+                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
         // Test
         engines.Start()
         
@@ -84,10 +80,9 @@ let ``Stopping engine sets state to stopped`` () =
         // Setup
         let syncItem1   = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2   = { someDataSync2 with Subscribers = seq {someResponder2} }
-        let diagnostics = { Log = seq [] }
 
-        let engines = seq [Engine(seq {syncItem1}, diagnostics) :> IEngine
-                           Engine(seq {syncItem2}, diagnostics) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}) :> IEngine
+                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
 
         engines.Start(); 
         
@@ -97,6 +92,6 @@ let ``Stopping engine sets state to stopped`` () =
         do! engines.Stop()
 
         // Verify
-        engines |> Diagnostics.report |> Seq.forall (fun v -> v.Status = "Is suspended") |> should equal true
+        engines |> Diagnostics.report |> Seq.forall (fun v -> v.Event = "Is suspended") |> should equal true
 
     } |> Async.RunSynchronously

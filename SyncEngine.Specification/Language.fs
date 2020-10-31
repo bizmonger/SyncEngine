@@ -37,8 +37,12 @@ module Language =
 
     type States<'submission,'response> = SyncState<'submission,'response> seq
 
-    type State = { Status : string }
-    type Diagnostics = { Log : (Id * State) seq }
+    type LogItem = { 
+        Event     : string 
+        Timestamp : DateTime
+    }
+
+    type Diagnostics = { Log : (Id * LogItem) seq }
 
     type IDataSync = 
         abstract member Start: unit -> unit
