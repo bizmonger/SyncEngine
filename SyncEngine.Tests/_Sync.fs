@@ -174,3 +174,31 @@ let ``Clear log`` () =
         engines.Log() |> Seq.isEmpty |> should equal true
 
     } |> Async.RunSynchronously
+
+
+
+[<Test>]
+let ``Max log entries`` () =
+
+    async {
+    
+        // Setup
+        let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
+        let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
+
+        let engines = seq [Engine(seq {syncItem1}) :> IEngine
+                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+
+        engines.Start(); 
+        do! Async.Sleep 1100
+        do! engines.Stop()
+
+        // Test
+        let log = engines.Log()
+
+        // Verify
+        log |> Seq.map snd 
+            |> Seq.forall(fun v -> v.Event = "Stopped") 
+            |> should equal true
+
+    } |> Async.RunSynchronously

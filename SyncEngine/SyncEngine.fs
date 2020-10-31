@@ -34,7 +34,9 @@ type Engine<'submission,'response>
         let logItem = { Event=event; Timestamp= DateTime.Now }
         let update  =  seq [item.Id, logItem]
 
-        diagnostics <- diagnostics |> Seq.append update
+        if   diagnostics |> Seq.length < 500 then
+             diagnostics <- diagnostics |> Seq.append update
+        else diagnostics <- diagnostics |> Seq.tail |> Seq.append update
 
     let start : Start<'submission,'response> =
 
