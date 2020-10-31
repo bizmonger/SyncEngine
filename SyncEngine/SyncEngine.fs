@@ -115,8 +115,8 @@ type Engine<'submission,'response>
                                 let syncItem = fst(snd v)
                                 Some <| DataSyncInstance(syncItem)
 
-        member x.Log()      : Log  = diagnostics
-        member x.ClearLog() : unit = diagnostics <- seq []
+        member x.Log()      = diagnostics
+        member x.ClearLog() = diagnostics <- seq []
 
 type MultiEngine(engines:IEngine seq) =
 
