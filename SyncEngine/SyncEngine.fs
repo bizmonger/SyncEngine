@@ -15,7 +15,7 @@ type IEngine =
     abstract member ClearLog : unit -> unit
 
 type Engine<'submission,'response>
-    (syncItems:DataSyncItem<'submission,'response> seq) =
+    (syncItems:DataSyncItem<'submission,'response> seq, maxMemoryLogItems:int) =
 
     let mutable diagnostics = seq []
     let mutable errors = seq []
@@ -34,7 +34,7 @@ type Engine<'submission,'response>
         let logItem = { Event=event; Timestamp= DateTime.Now }
         let update  =  seq [item.Id, logItem]
 
-        if   diagnostics |> Seq.length < 500 then
+        if   diagnostics |> Seq.length < maxMemoryLogItems then
              diagnostics <- diagnostics |> Seq.append update
         else diagnostics <- diagnostics |> Seq.tail |> Seq.append update
 

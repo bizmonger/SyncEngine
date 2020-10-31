@@ -13,7 +13,7 @@ let ``Bootstrap sync engine`` () =
     
         // Setup
         let syncItem = { someDataSync1 with Subscribers = seq {someResponder1} }
-        let engine   = Engine(seq [syncItem]) :> IEngine
+        let engine   = Engine(seq [syncItem], maxMemoryLogItems) :> IEngine
 
         // Test
         engine.Start()
@@ -31,7 +31,7 @@ let ``Engine with multiple syncs`` () =
     
         // Setup
         let syncItem = { someDataSync1 with Subscribers = seq {someResponder1; someResponder2} }
-        let engine   = Engine(seq [syncItem]) :> IEngine
+        let engine   = Engine(seq [syncItem], maxMemoryLogItems) :> IEngine
 
         // Test
         engine.Start()
@@ -56,8 +56,8 @@ let ``Engine only syncs registered syncitem subscribers`` () =
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}) :> IEngine
-                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, maxMemoryLogItems) :> IEngine
+                           Engine(seq {syncItem2}, maxMemoryLogItems) :> IEngine] |> MultiEngine
         // Test
         engines.Start()
         
@@ -81,8 +81,8 @@ let ``Stopping engine sets state to started`` () =
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}) :> IEngine
-                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, maxMemoryLogItems) :> IEngine
+                           Engine(seq {syncItem2}, maxMemoryLogItems) :> IEngine] |> MultiEngine
 
         engines.Start(); 
         
@@ -108,8 +108,8 @@ let ``Stopping engine sets state to stopped`` () =
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}) :> IEngine
-                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, maxMemoryLogItems) :> IEngine
+                           Engine(seq {syncItem2}, maxMemoryLogItems) :> IEngine] |> MultiEngine
 
         engines.Start(); 
         
@@ -135,8 +135,8 @@ let ``Starting stoping 2 data sync items results in '4' log items`` () =
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}) :> IEngine
-                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, maxMemoryLogItems) :> IEngine
+                           Engine(seq {syncItem2}, maxMemoryLogItems) :> IEngine] |> MultiEngine
 
         engines.Start(); 
         
@@ -160,8 +160,8 @@ let ``Clear log`` () =
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}) :> IEngine
-                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, maxMemoryLogItems) :> IEngine
+                           Engine(seq {syncItem2}, maxMemoryLogItems) :> IEngine] |> MultiEngine
 
         engines.Start(); 
         do! Async.Sleep 1100
@@ -175,8 +175,6 @@ let ``Clear log`` () =
 
     } |> Async.RunSynchronously
 
-
-
 [<Test>]
 let ``Max log entries`` () =
 
@@ -186,8 +184,8 @@ let ``Max log entries`` () =
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}) :> IEngine
-                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, 1) :> IEngine
+                           Engine(seq {syncItem2}, 1) :> IEngine] |> MultiEngine
 
         engines.Start(); 
         do! Async.Sleep 1100

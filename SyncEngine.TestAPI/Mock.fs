@@ -16,7 +16,8 @@ type MockResponse() =
         member x.RespondTo(_:ContextResponse<'submission,'response>) = x.Responded <- true
 
 module Mock =
-
+    
+    let maxMemoryLogItems = 99
     let oneSecond   = TimeSpan(0,0,1)
     let someRequest = { Endpoint= "some_endpoint"; Submission= "some_submission" }
 
