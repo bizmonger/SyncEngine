@@ -21,13 +21,13 @@ module Mock =
     let oneSecond   = TimeSpan(0,0,1)
     let someRequest = { Endpoint= "some_endpoint"; Submission= "some_submission" }
 
-    let somePullOperation1 : Poll<int,string> = fun _ -> async.Return <| Ok "successful response"
-    let somePullOperation2 : Poll<string,int> = fun _ -> async.Return <| Ok 200
+    let somePollOperation1 : Poll<int,string> = fun _ -> async.Return <| Ok "successful response"
+    let somePollOperation2 : Poll<string,int> = fun _ -> async.Return <| Ok 200
 
     let someDataSync1 = {
         Id          = "some_sync_id_1"
         Request     = { Endpoint="some_endpoint"; Submission=123 }
-        Execute     = somePullOperation1
+        Execute     = somePollOperation1
         Interval    = oneSecond
         Subscribers = seq []
     }
@@ -35,7 +35,7 @@ module Mock =
     let someDataSync2 = {
         Id          = "some_sync_id_2"
         Request     = { Endpoint="some_endpoint"; Submission="123" }
-        Execute     = somePullOperation2
+        Execute     = somePollOperation2
         Interval    = oneSecond
         Subscribers = seq []
     }

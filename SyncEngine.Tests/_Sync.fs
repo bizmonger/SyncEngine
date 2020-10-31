@@ -46,7 +46,6 @@ let ``Engine with multiple syncs`` () =
 
     } |> Async.RunSynchronously
 
-
 [<Test>]
 let ``Engine only syncs registered syncitem subscribers`` () =
 
