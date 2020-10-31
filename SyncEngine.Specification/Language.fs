@@ -30,13 +30,6 @@ module Language =
         Subscribers : IRespond seq
     }
 
-    and SyncState<'submission,'response> = 
-        | NotStarted of DataSyncItem<'submission,'response>
-        | Started    of DataSyncItem<'submission,'response>
-        | Stopped    of DataSyncItem<'submission,'response>
-
-    type States<'submission,'response> = SyncState<'submission,'response> seq
-
     type LogItem = { 
         Event     : string 
         Timestamp : DateTime

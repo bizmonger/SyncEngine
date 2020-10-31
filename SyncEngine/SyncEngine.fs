@@ -7,10 +7,11 @@ open Operations
 
 type IEngine = 
 
-    abstract member TryFind : Id   -> DataSyncInstance option
-    abstract member Start   : unit -> unit
-    abstract member Stop    : unit -> unit
-    abstract member Stop    : Id   -> unit
+    abstract member TryFind     : Id   -> DataSyncInstance option
+    abstract member Start       : unit -> unit
+    abstract member Stop        : unit -> unit
+    abstract member Stop        : Id   -> unit
+    abstract member Diagnostics : unit -> Diagnostics
 
 type Engine<'submission,'response>
     (syncItems:DataSyncItem<'submission,'response> seq) =
@@ -70,6 +71,8 @@ type Engine<'submission,'response>
 
     interface IEngine with
 
+        member x.Diagnostics(): Diagnostics = diagnostics
+
         member x.TryFind(id: Id) = 
         
             kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
@@ -118,6 +121,13 @@ type MultiEngine(engines:IEngine seq) =
 
     member x.Start() = engines |> Seq.iter(fun engine -> engine.Start())
     member x.Stop()  = async { engines |> Seq.iter(fun engine -> engine.Stop()) }
+
+    member x.Log() : (Id * LogItem) seq = 
+    
+        engines |> Seq.map(fun v -> v.Diagnostics()) 
+                |> Seq.map(fun v -> v.Log) 
+                |> Seq.concat
+                |> Seq.sortByDescending(fun (_,v) -> v.Timestamp)
 
     member x.TryFind(id:Id) =
 
