@@ -21,8 +21,8 @@ module Mock =
     let oneSecond   = TimeSpan(0,0,1)
     let someRequest = { Endpoint= "some_endpoint"; Submission= "some_submission" }
 
-    let somePullOperation1 : Pull<int,string> = fun _ -> async.Return <| Ok "successful response"
-    let somePullOperation2 : Pull<string,int> = fun _ -> async.Return <| Ok 200
+    let somePullOperation1 : Poll<int,string> = fun _ -> async.Return <| Ok "successful response"
+    let somePullOperation2 : Poll<string,int> = fun _ -> async.Return <| Ok 200
 
     let someDataSync1 = {
         Id          = "some_sync_id_1"

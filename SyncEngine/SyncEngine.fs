@@ -49,8 +49,12 @@ type Engine<'submission,'response>
 
                         async {
                     
+                            syncItem |> log "Poll Started"
+
                             let! serverResult = syncItem.Execute syncItem.Request
                             let  result       = { Request= syncItem.Request; Response= serverResult }
+
+                            syncItem |> log "Poll Ended"
 
                             syncItem.Subscribers |> Seq.iter (fun subscriber -> subscriber.RespondTo result)
                         }
