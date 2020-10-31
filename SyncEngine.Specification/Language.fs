@@ -35,7 +35,10 @@ module Language =
         | Started    of DataSyncItem<'submission,'response>
         | Stopped    of DataSyncItem<'submission,'response>
 
-    type Log = string seq
+    type States<'submission,'response> = SyncState<'submission,'response> seq
+
+    type State = { Status : string }
+    type Diagnostics = { Log : (Id * State) seq }
 
     type IDataSync = 
         abstract member Start: unit -> unit

@@ -13,8 +13,9 @@ let ``Bootstrap sync engine`` () =
     async {
     
         // Setup
+        let diagnostics = { Log = seq [] }
         let syncItem = { someDataSync1 with Subscribers = seq {someResponder1} }
-        let engine   = Engine(seq [syncItem]) :> IEngine
+        let engine   = Engine(seq [syncItem], diagnostics) :> IEngine
 
         // Test
         engine.Start()
@@ -31,8 +32,9 @@ let ``Engine with multiple syncs`` () =
     async {
     
         // Setup
+        let diagnostics = { Log = seq [] }
         let syncItem = { someDataSync1 with Subscribers = seq {someResponder1; someResponder2} }
-        let engine   = Engine(seq [syncItem]) :> IEngine
+        let engine   = Engine(seq [syncItem], diagnostics) :> IEngine
 
         // Test
         engine.Start()
@@ -54,11 +56,12 @@ let ``Engine only syncs registered syncitem subscribers`` () =
     async {
     
         // Setup
+        let diagnostics = { Log = seq [] }
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}) :> IEngine
-                           Engine(seq {syncItem2}) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, diagnostics) :> IEngine
+                           Engine(seq {syncItem2}, diagnostics) :> IEngine] |> MultiEngine
         // Test
         engines.Start()
         
@@ -73,26 +76,27 @@ let ``Engine only syncs registered syncitem subscribers`` () =
 
     } |> Async.RunSynchronously
 
-//[<Test>]
-//let ``Stopping engine sets state to stopped`` () =
+[<Test>]
+let ``Stopping engine sets state to stopped`` () =
 
-//    async {
+    async {
     
-//        // Setup
-//        let syncItem1 = { someSyncItem1 with Subscribers = seq {someResponder1} }
-//        let engines   = seq [Engine(seq {syncItem1}) :> IEngine] |> MultiEngine
+        // Setup
+        let syncItem1   = { someDataSync1 with Subscribers = seq {someResponder1} }
+        let syncItem2   = { someDataSync2 with Subscribers = seq {someResponder2} }
+        let diagnostics = { Log = seq [] }
 
-//        engines.Start()
+        let engines = seq [Engine(seq {syncItem1}, diagnostics) :> IEngine
+                           Engine(seq {syncItem2}, diagnostics) :> IEngine] |> MultiEngine
+
+        engines.Start(); 
         
-//        do! Async.Sleep 1100
+        do! Async.Sleep 1100
 
-//        // Test
-//        do! engines.Stop()
+        // Test
+        do! engines.Stop()
 
-//        // Verify
-//        engines.TryFind(syncItem1.Id)
-//        |> function
-//           | None   -> failwith "Failed to find sync item"
-//           | Some (v:SyncItem<int,string>) -> v.State |> should equal Started
+        // Verify
+        engines |> Diagnostics.report |> Seq.forall (fun v -> v.Status = "Is suspended") |> should equal true
 
-//    } |> Async.RunSynchronously
+    } |> Async.RunSynchronously

@@ -11,7 +11,8 @@ type IEngine =
     abstract member Stop    : unit -> unit
     abstract member Stop    : Id   -> unit
 
-type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response> seq) =
+type Engine<'submission,'response>
+    (syncItems:DataSyncItem<'submission,'response> seq, diagnostics:Diagnostics) =
 
     let mutable errors = seq []
 
@@ -45,7 +46,7 @@ type Engine<'submission,'response>(syncItems:DataSyncItem<'submission,'response>
                     let _ , timer = map.[v.Id]
                     timer.Interval  <- miliseconds
                     timer.AutoReset <- true
-                    timer.Elapsed.Add (fun _ -> execute() |> Async.RunSynchronously)
+                    timer.Elapsed.Add (fun _ -> execute() |> Async.Start)
                     timer.Start()
 
                     return Ok ()
