@@ -127,7 +127,7 @@ let ``Stopping engine sets state to stopped`` () =
     } |> Async.RunSynchronously
 
 [<Test>]
-let ``Starting stoping 2 data sync items results in '4' log items`` () =
+let ``Starting stoping 2 data sync items results in '8' log items`` () =
 
     async {
     
@@ -146,7 +146,7 @@ let ``Starting stoping 2 data sync items results in '4' log items`` () =
         do! engines.Stop()
 
         // Verify
-        engines.Log() |> Seq.length |> should equal 4
+        engines.Log() |> Seq.length |> should equal 8
 
     } |> Async.RunSynchronously
 
