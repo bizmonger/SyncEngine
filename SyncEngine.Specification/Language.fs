@@ -25,7 +25,7 @@ module Language =
     type DataSyncItem<'submission,'response> = {
         Id          : Id
         Request     : Request<'submission>
-        Execute     : Request<'submission> -> AsyncResult<'response, ErrorDescription> // ALIAS: PULL
+        Execute     : Request<'submission> -> AsyncResult<'response, ErrorDescription> // ALIAS: Poll
         Interval    : TimeSpan
         Subscribers : IRespond seq
     }

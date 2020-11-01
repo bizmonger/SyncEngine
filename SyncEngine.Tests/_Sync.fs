@@ -17,9 +17,9 @@ let ``Bootstrap sync engine`` () =
 
         // Test
         engine.Start()
-        Thread.Sleep 1100
 
         // Verify
+        do! Async.Sleep 1000
         someResponder1.Responded |> should equal true
 
     } |> Async.RunSynchronously
@@ -60,7 +60,7 @@ let ``Engine only syncs registered syncitem subscribers`` () =
         // Test
         engines.Start()
         
-        do! Async.Sleep 1100
+        
 
         // Verify
         [someResponder1.Responded
@@ -85,7 +85,7 @@ let ``Stopping engine sets state to started`` () =
 
         engines.Start(); 
         
-        do! Async.Sleep 1100
+        
 
         // Test
         do! engines.Stop()
@@ -112,8 +112,6 @@ let ``Stopping engine sets state to stopped`` () =
 
         engines.Start(); 
         
-        do! Async.Sleep 1100
-
         // Test
         do! engines.Stop()
 
@@ -138,14 +136,13 @@ let ``Starting stoping 2 data sync items results in '8' log items`` () =
                            Engine(seq {syncItem2}, maxMemoryLogItems) :> IEngine] |> MultiEngine
 
         engines.Start(); 
-        
-        do! Async.Sleep 1100
 
         // Test
         do! engines.Stop()
 
         // Verify
-        engines.Log() |> Seq.length |> should equal 8
+        let log = engines.Log()
+        log |> Seq.length |> should equal 8
 
     } |> Async.RunSynchronously
 
@@ -163,19 +160,21 @@ let ``Clear log`` () =
                            Engine(seq {syncItem2}, maxMemoryLogItems) :> IEngine] |> MultiEngine
 
         engines.Start(); 
-        do! Async.Sleep 1100
+        
         do! engines.Stop()
+        do! Async.Sleep 1000
 
         // Test
         engines.ClearLog()
 
         // Verify
-        engines.Log() |> Seq.isEmpty |> should equal true
+        let expected = engines.Log()
+        expected |> Seq.isEmpty |> should equal true
 
     } |> Async.RunSynchronously
 
 [<Test>]
-let ``Max log entries`` () =
+let ``Stopping '2' engines results in '2' stop events logged`` () =
 
     async {
     
@@ -183,11 +182,10 @@ let ``Max log entries`` () =
         let syncItem1 = { someDataSync1 with Subscribers = seq {someResponder1} }
         let syncItem2 = { someDataSync2 with Subscribers = seq {someResponder2} }
 
-        let engines = seq [Engine(seq {syncItem1}, 1) :> IEngine
-                           Engine(seq {syncItem2}, 1) :> IEngine] |> MultiEngine
+        let engines = seq [Engine(seq {syncItem1}, 99) :> IEngine
+                           Engine(seq {syncItem2}, 99) :> IEngine] |> MultiEngine
 
         engines.Start(); 
-        do! Async.Sleep 1100
         do! engines.Stop()
 
         // Test
@@ -195,7 +193,8 @@ let ``Max log entries`` () =
 
         // Verify
         log |> Seq.map snd 
-            |> Seq.forall(fun v -> v.Event = "Stopped") 
-            |> should equal true
+            |> Seq.filter(fun v -> v.Event = "Stopped")
+            |> Seq.length
+            |> should equal 2
 
     } |> Async.RunSynchronously
