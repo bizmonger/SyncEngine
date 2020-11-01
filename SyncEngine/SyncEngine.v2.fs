@@ -37,6 +37,7 @@ type Engine<'submission,'response>
         fun syncItem ->
 
             let execute () =
+
                 async { 
 
                     syncItem |> log "Poll Started"
@@ -66,7 +67,6 @@ type Engine<'submission,'response>
                     return Ok ()
                     
                 with ex -> return Error <| ex.GetBaseException().Message
-
             }
 
     member x.Errors with get()  = errors
@@ -88,6 +88,7 @@ type Engine<'submission,'response>
                 }
     
             syncItems |> Seq.iter (fun sync -> 
+
                 let asyncOp = execute sync
                 let _, cancel = map.[sync.Id]
                 Async.Start(asyncOp, cancel.Token))
@@ -98,6 +99,7 @@ type Engine<'submission,'response>
 
                 cancellation.Cancel()
                 cancellation.Dispose()
+
                 item |> log "Stopped"
             
             kvPairs |> Seq.iter(fun (_,v) -> handle v)
@@ -115,9 +117,9 @@ type Engine<'submission,'response>
                         |> function
                            | None   -> None
                            | Some v -> 
-                            
-                                let syncItem = fst(snd v)
-                                Some <| DataSyncInstance(syncItem)
+
+                               let syncItem = fst(snd v)
+                               Some <| DataSyncInstance(syncItem)
 
         member x.Log()      = diagnostics
         member x.ClearLog() = diagnostics <- seq []
