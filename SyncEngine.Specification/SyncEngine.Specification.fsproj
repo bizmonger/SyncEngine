@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <Compile Include="Language.fs" />
-    <Compile Include="SyncEngineOperations.fs" />
+    <Compile Include="Operations.fs" />
   </ItemGroup>
 
 </Project>
