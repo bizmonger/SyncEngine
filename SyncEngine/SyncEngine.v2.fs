@@ -26,7 +26,7 @@ type Engine<'submission,'response>
     let log event item : unit =
 
         let logItem = { Event=event; Timestamp= DateTime.Now }
-        let update  =  seq [item.Id, logItem]
+        let update  = seq [item.Id, logItem]
 
         if   diagnostics |> Seq.length < maxMemoryLogItems then
              diagnostics <- diagnostics |> Seq.append update
@@ -43,11 +43,10 @@ type Engine<'submission,'response>
                     syncItem |> log "Poll Started"
 
                     let! serverResult = syncItem.Execute syncItem.Request
-                    let  result       = { Request= syncItem.Request; Response= serverResult }
+                    let  result = { Request= syncItem.Request; Response= serverResult }
 
                     syncItem |> log "Poll Ended"
-
-                    syncItem.Subscribers |> Seq.iter (fun subscriber -> subscriber.RespondTo result)
+                    syncItem.Subscribers |> Seq.iter (fun v -> v.RespondTo result)
                 }
 
             let rec loop () = 
@@ -63,7 +62,7 @@ type Engine<'submission,'response>
             async {
 
                 try
-                    do!   loop()
+                    do! loop  ()
                     return Ok ()
                     
                 with ex -> return Error <| ex.GetBaseException().Message
@@ -86,12 +85,13 @@ type Engine<'submission,'response>
                     | Error msg -> x.Errors <- errors |> Seq.append msg
                     | Ok _      -> ()
                 }
-    
-            syncItems |> Seq.iter (fun sync -> 
 
-                let asyncOp = execute sync
+            let handle sync = 
+
                 let _, cancel = map.[sync.Id]
-                Async.Start(asyncOp, cancel.Token))
+                Async.Start(execute sync, cancel.Token)
+    
+            syncItems |> Seq.iter handle
 
         member x.Stop() =
 
@@ -115,23 +115,20 @@ type Engine<'submission,'response>
             
                 kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
                         |> function
-                           | None   -> None
-                           | Some v -> 
-
-                               let syncItem = fst(snd v)
-                               Some <| DataSyncInstance(syncItem)
+                           | None           -> None
+                           | Some (_,(v,_)) -> Some <| DataSyncInstance(v)
 
         member x.Log()      = diagnostics
         member x.ClearLog() = diagnostics <- seq []
 
 type MultiEngine(engines:IEngine seq) =
 
-    member x.Start() = engines |> Seq.iter(fun engine -> engine.Start())
-    member x.Stop()  = async { engines |> Seq.iter(fun engine -> engine.Stop()) }
+    member x.Start() = engines |> Seq.iter(fun v -> v.Start())
+    member x.Stop()  = async { engines |> Seq.iter(fun v -> v.Stop()) }
 
     member x.Log() : (Id * LogItem) seq = 
     
-        engines |> Seq.map(fun engine -> engine.Log()) 
+        engines |> Seq.map(fun v -> v.Log()) 
                 |> Seq.concat
                 |> Seq.sortByDescending(fun (_,logItem) -> logItem.Timestamp)
 
