@@ -130,20 +130,14 @@ type MultiEngine(engines:IEngine seq) =
     
         engines |> Seq.map(fun v -> v.Log()) 
                 |> Seq.concat
-                |> Seq.sortByDescending(fun (_,logItem) -> logItem.Timestamp)
+                |> Seq.sortByDescending(fun (_,v) -> v.Timestamp)
 
     member x.ClearLog() = engines |> Seq.iter(fun engine -> engine.ClearLog()) 
 
     member x.TryFind(id:Id) =
 
-        let find (v:IEngine) =
-
-            id |> v.TryFind |> function
-            | None      -> None
-            | Some item -> Some item
-
         engines 
-        |> Seq.map find
+        |> Seq.map (fun v -> id |> v.TryFind)
         |> Seq.toList
         |> function
            | []   -> None
