@@ -1,153 +1,144 @@
 ﻿namespace SyncEngine
 
 open System
-open System.Timers
+open System.Threading
 open Language
 open Operations
 
-//type IEngine = 
+type IEngine = 
 
-//    abstract member TryFind  : Id   -> DataSyncInstance option
-//    abstract member Start    : unit -> unit
-//    abstract member Stop     : unit -> unit
-//    abstract member Stop     : Id   -> unit
-//    abstract member Log      : unit -> Log
-//    abstract member ClearLog : unit -> unit
+    abstract member TryFind  : Id   -> DataSyncInstance option
+    abstract member Start    : unit -> unit
+    abstract member Stop     : unit -> unit
+    abstract member Stop     : Id   -> unit
+    abstract member Log      : unit -> Log
+    abstract member ClearLog : unit -> unit
 
-//type Engine<'submission,'response>
-//    (syncItems:DataSyncItem<'submission,'response> seq, maxMemoryLogItems:int) =
+type Engine<'submission,'response>
+    (syncItems:DataSyncItem<'submission,'response> seq, maxMemoryLogItems:int) =
 
-//    let mutable diagnostics = seq []
-//    let mutable errors = seq []
+    let mutable diagnostics = seq []
+    let mutable errors      = seq []
 
-//    let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, (sync, new Timer())))
-//    let map     = Map.ofSeq kvPairs
+    let kvPairs = syncItems |> Seq.map(fun sync -> (sync.Id, (sync, new CancellationTokenSource())))
+    let map     = Map.ofSeq kvPairs
 
-//    let destroy (v:Id * Timer) =
+    let log event item : unit =
 
-//        let timer = (snd v)
-//        timer.Stop()
-//        timer.Dispose()
+        let logItem = { Event=event; Timestamp= DateTime.Now }
+        let update  = seq [item.Id, logItem]
 
-//    let log event item : unit =
+        if   diagnostics |> Seq.length < maxMemoryLogItems then
+             diagnostics <- diagnostics |> Seq.append update
+        else diagnostics <- diagnostics |> Seq.tail |> Seq.append update
 
-//        let logItem = { Event=event; Timestamp= DateTime.Now }
-//        let update  =  seq [item.Id, logItem]
+    let start : Start<'submission,'response> =
 
-//        if   diagnostics |> Seq.length < maxMemoryLogItems then
-//             diagnostics <- diagnostics |> Seq.append update
-//        else diagnostics <- diagnostics |> Seq.tail |> Seq.append update
+        fun syncItem ->
 
-//    let start : Start<'submission,'response> =
+            let execute () =
 
-//        fun syncItem ->
+                async { 
 
-//            async {
+                    syncItem |> log "Poll Started"
 
-//                try
-//                    let execute () =
+                    let! serverResult = syncItem.Execute syncItem.Request
+                    let  result = { Request= syncItem.Request; Response= serverResult }
 
-//                        async {
+                    syncItem |> log "Poll Ended"
+                    syncItem.Subscribers |> Seq.iter (fun v -> v.RespondTo result)
+                }
+
+            let rec loop () = 
+
+                async {
+
+                    let miliseconds = syncItem.Interval.Seconds * 1000
+                    do! execute()
+                    do! Async.Sleep(miliseconds)
+                    return! loop () 
+                }
                     
-//                            syncItem |> log "Poll Started"
+            async {
 
-//                            let! serverResult = syncItem.Execute syncItem.Request
-//                            let  result       = { Request= syncItem.Request; Response= serverResult }
-
-//                            syncItem |> log "Poll Ended"
-
-//                            syncItem.Subscribers |> Seq.iter (fun subscriber -> subscriber.RespondTo result)
-//                        }
-
-//                    let miliseconds = (float) syncItem.Interval.Seconds * 1000.0
-//                    let _ , timer   = map.[syncItem.Id]
-//                    timer.Interval  <- miliseconds
-//                    timer.AutoReset <- true
-//                    timer.Elapsed.Add (fun _ -> execute() |> Async.Start)
-//                    timer.Start();
+                try
+                    do! loop  ()
+                    return Ok ()
                     
-//                    syncItem |> log "Started"
+                with ex -> return Error <| ex.GetBaseException().Message
+            }
 
-//                    return Ok ()
-                    
-//                with ex -> return Error <| ex.GetBaseException().Message
-//        }
+    member x.Errors with get()  = errors
+                    and  set(v) = errors <- v
 
-//    member x.Errors with get()  = errors
-//                    and  set(v) = errors <- v
+    interface IEngine with
 
-//    interface IEngine with
+        member x.Start() : unit =
 
-//        member x.Start() : unit =
+            let execute (sync:DataSyncItem<_,_>) = 
 
-//            let execute (sync:DataSyncItem<_,_>) = 
-        
-//                async {
-            
-//                    match! start sync with
-//                    | Error msg -> x.Errors <- errors |> Seq.append msg
-//                    | Ok _      -> ()
-//                }
+                sync |> log "Started"
+
+                async {
+
+                    match! start sync with
+                    | Error msg -> x.Errors <- errors |> Seq.append msg
+                    | Ok _      -> ()
+                }
+
+            let handle sync = 
+
+                let _, cancel = map.[sync.Id]
+                Async.Start(execute sync, cancel.Token)
     
-//            syncItems |> Seq.iter (fun sync -> sync |> execute |> Async.RunSynchronously)
+            syncItems |> Seq.iter handle
 
-//        member x.Stop() =
+        member x.Stop() =
 
-//            let handle kv =
+            let handle (item, (cancellation:CancellationTokenSource)) =
 
-//                let id   , value = fst kv    , snd kv
-//                let item , timer = fst value , snd value
+                cancellation.Cancel()
+                cancellation.Dispose()
 
-//                destroy (id, timer)
-//                item |> log "Stopped"
+                item |> log "Stopped"
             
-//            kvPairs |> Seq.iter handle
+            kvPairs |> Seq.iter(fun (_,v) -> handle v)
 
-//        member x.Stop(id: Id) = 
+        member x.Stop(id: Id) = 
         
-//            kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
-//                    |> function
-//                       | None   -> ()
-//                       | Some v -> let id, timer = fst v, snd(snd v)
-//                                   destroy (id, timer)
+            kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
+                    |> function
+                       | None -> ()
+                       | Some (_,(_,c)) -> c.Cancel()
 
-//        member x.TryFind(id: Id) = 
+        member x.TryFind(id: Id) = 
             
-//                kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
-//                        |> function
-//                           | None   -> None
-//                           | Some v -> 
-                            
-//                                let syncItem = fst(snd v)
-//                                Some <| DataSyncInstance(syncItem)
+                kvPairs |> Seq.tryFind(fun v -> (fst v) = id)
+                        |> function
+                           | None           -> None
+                           | Some (_,(v,_)) -> Some <| DataSyncInstance(v)
 
-//        member x.Log()      = diagnostics
-//        member x.ClearLog() = diagnostics <- seq []
+        member x.Log()      = diagnostics
+        member x.ClearLog() = diagnostics <- seq []
 
-//type MultiEngine(engines:IEngine seq) =
+type MultiEngine(engines:IEngine seq) =
 
-//    member x.Start() = engines |> Seq.iter(fun engine -> engine.Start())
-//    member x.Stop()  = async { engines |> Seq.iter(fun engine -> engine.Stop()) }
+    member x.Start() = engines |> Seq.iter(fun v -> v.Start())
+    member x.Stop()  = async { engines |> Seq.iter(fun v -> v.Stop()) }
 
-//    member x.Log() : (Id * LogItem) seq = 
+    member x.Log() : (Id * LogItem) seq = 
     
-//        engines |> Seq.map(fun engine -> engine.Log()) 
-//                |> Seq.concat
-//                |> Seq.sortByDescending(fun (_,logItem) -> logItem.Timestamp)
+        engines |> Seq.map(fun v -> v.Log()) 
+                |> Seq.concat
+                |> Seq.sortByDescending(fun (_,v) -> v.Timestamp)
 
-//    member x.ClearLog() = engines |> Seq.iter(fun engine -> engine.ClearLog()) 
+    member x.ClearLog() = engines |> Seq.iter(fun engine -> engine.ClearLog()) 
 
-//    member x.TryFind(id:Id) =
+    member x.TryFind(id:Id) =
 
-//        let find (v:IEngine) =
-
-//            id |> v.TryFind |> function
-//            | None      -> None
-//            | Some item -> Some item
-
-//        engines 
-//        |> Seq.map find
-//        |> Seq.toList
-//        |> function
-//           | []   -> None
-//           | h::_ -> Some h
+        engines 
+        |> Seq.map (fun v -> id |> v.TryFind)
+        |> Seq.toList
+        |> function
+           | []   -> None
+           | h::_ -> Some h
